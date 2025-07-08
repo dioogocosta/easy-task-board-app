@@ -34,7 +34,9 @@ const TaskManager: React.FC<TaskManagerProps> = ({
   };
 
   const handleDragOver = (targetId: string) => {
-    setDropTarget(targetId);
+    if (dragData) {
+      setDropTarget(targetId);
+    }
   };
 
   const handleDrop = (targetId: string) => {
@@ -77,6 +79,8 @@ const TaskManager: React.FC<TaskManagerProps> = ({
   };
 
   const handleTaskDrop = (sourceId: string, taskId: string | number, targetId: string) => {
+    if (sourceId === targetId) return;
+    
     const newTaskData = { ...taskData };
     
     if (sourceId === 'minhas-tarefas' && targetId !== 'minhas-tarefas') {
@@ -124,6 +128,34 @@ const TaskManager: React.FC<TaskManagerProps> = ({
         };
         newTaskData.minhasTarefas.push(newTask);
       }
+    } else if (sourceId !== 'minhas-tarefas' && targetId !== 'minhas-tarefas' && sourceId !== targetId) {
+      // Mover entre acordeões que não são "Minhas Tarefas"
+      let taskTitle = '';
+      
+      if (sourceId === 'lista-favoritos') {
+        const favIndex = newTaskData.favoritos.findIndex(f => f.tarefa === taskId);
+        if (favIndex !== -1) {
+          taskTitle = newTaskData.favoritos[favIndex].tarefa;
+          newTaskData.favoritos.splice(favIndex, 1);
+        }
+      } else {
+        const taskIndex = newTaskData.tarefasPorPessoa[sourceId]?.indexOf(taskId as string);
+        if (taskIndex !== undefined && taskIndex !== -1) {
+          taskTitle = taskId as string;
+          newTaskData.tarefasPorPessoa[sourceId].splice(taskIndex, 1);
+        }
+      }
+      
+      if (taskTitle) {
+        if (targetId === 'lista-favoritos') {
+          newTaskData.favoritos.push({ pessoa: sourceId, tarefa: taskTitle });
+        } else {
+          if (!newTaskData.tarefasPorPessoa[targetId]) {
+            newTaskData.tarefasPorPessoa[targetId] = [];
+          }
+          newTaskData.tarefasPorPessoa[targetId].push(taskTitle);
+        }
+      }
     }
     
     onDataChange(newTaskData, accordions);
@@ -137,8 +169,16 @@ const TaskManager: React.FC<TaskManagerProps> = ({
 
   return (
     <div className="space-y-4">
-      {sortedAccordions.map((accordion) => (
+      {sortedAccordions.map((accordion, index) => (
         <div key={accordion.id} className="relative">
+          {dragData && dragData.type === 'accordion' && dragData.accordionId !== accordion.id && (
+            <DropZone
+              isVisible={dropTarget === accordion.id}
+              onDrop={() => handleDrop(accordion.id)}
+              className="absolute -top-2 left-0 right-0 z-10"
+            />
+          )}
+          
           <AccordionComponent
             accordion={accordion}
             taskData={taskData}
@@ -151,13 +191,6 @@ const TaskManager: React.FC<TaskManagerProps> = ({
             isDragging={dragData?.accordionId === accordion.id}
             isDropTarget={dropTarget === accordion.id}
           />
-          
-          {dragData && dropTarget === accordion.id && (
-            <DropZone
-              isVisible={true}
-              onDrop={() => handleDrop(accordion.id)}
-            />
-          )}
         </div>
       ))}
     </div>

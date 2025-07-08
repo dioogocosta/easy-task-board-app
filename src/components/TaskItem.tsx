@@ -142,27 +142,29 @@ const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   const handleDelete = () => {
-    if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-      const newTaskData = { ...taskData };
-      
-      if (accordionId === 'minhas-tarefas' && typeof task === 'object' && 'id' in task) {
-        newTaskData.minhasTarefas = newTaskData.minhasTarefas.filter(t => t.id !== task.id);
-      } else if (accordionId === 'lista-favoritos' && typeof task === 'object' && 'tarefa' in task) {
-        newTaskData.favoritos = newTaskData.favoritos.filter(f => 
-          f.tarefa !== task.tarefa || f.pessoa !== task.pessoa
-        );
-      } else {
+    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+    
+    const newTaskData = { ...taskData };
+    
+    if (accordionId === 'minhas-tarefas' && typeof task === 'object' && 'id' in task) {
+      newTaskData.minhasTarefas = newTaskData.minhasTarefas.filter(t => t.id !== task.id);
+    } else if (accordionId === 'lista-favoritos' && typeof task === 'object' && 'tarefa' in task) {
+      newTaskData.favoritos = newTaskData.favoritos.filter(f => 
+        f.tarefa !== task.tarefa || f.pessoa !== task.pessoa
+      );
+    } else if (typeof task === 'string') {
+      if (newTaskData.tarefasPorPessoa[accordionId]) {
         newTaskData.tarefasPorPessoa[accordionId] = newTaskData.tarefasPorPessoa[accordionId].filter(
           t => t !== task
         );
       }
-      
-      onDataChange(newTaskData, []);
-      toast({
-        title: "Sucesso",
-        description: "Tarefa excluída com sucesso!",
-      });
     }
+    
+    onDataChange(newTaskData, []);
+    toast({
+      title: "Sucesso",
+      description: "Tarefa excluída com sucesso!",
+    });
   };
 
   const handleToggleFavorite = () => {

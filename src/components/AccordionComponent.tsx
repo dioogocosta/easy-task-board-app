@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Edit3, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit3, GripVertical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TaskData, Accordion, DragData } from '@/types/task';
 import TaskList from './TaskList';
+import NewTaskForm from './NewTaskForm';
 import { cn } from '@/lib/utils';
 
 interface AccordionComponentProps {
@@ -35,6 +36,7 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
   const [isOpen, setIsOpen] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(accordion.title);
+  const [showNewTaskForm, setShowNewTaskForm] = useState(false);
 
   const handleDragStart = (e: React.DragEvent) => {
     if (accordion.isFixed) return;
@@ -64,7 +66,15 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
   const handleTitleSave = () => {
     if (editingTitle.trim() && editingTitle !== accordion.title) {
       // Implementar lógica de renomeação
-      console.log('Renaming accordion:', accordion.id, 'to:', editingTitle);
+      const newTaskData = { ...taskData };
+      const newAccordions = [accordion]; // Simplificado por agora
+      
+      if (newTaskData.tarefasPorPessoa[accordion.id]) {
+        newTaskData.tarefasPorPessoa[editingTitle] = newTaskData.tarefasPorPessoa[accordion.id];
+        delete newTaskData.tarefasPorPessoa[accordion.id];
+      }
+      
+      onDataChange(newTaskData, newAccordions);
     }
     setIsEditing(false);
   };
@@ -72,6 +82,24 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
   const handleTitleCancel = () => {
     setEditingTitle(accordion.title);
     setIsEditing(false);
+  };
+
+  const handleNewTask = (titulo: string, descricao: string) => {
+    const newTaskData = { ...taskData };
+    
+    if (accordion.id === 'minhas-tarefas') {
+      const newTask = {
+        id: Date.now(),
+        titulo,
+        descricao,
+        concluida: false,
+        dataCreacao: new Date().toLocaleDateString('pt-BR')
+      };
+      newTaskData.minhasTarefas.push(newTask);
+    }
+    
+    onDataChange(newTaskData, []);
+    setShowNewTaskForm(false);
   };
 
   const getTaskCount = () => {
@@ -156,9 +184,10 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
               variant="ghost"
               size="sm"
               className="text-white hover:bg-blue-700"
-              onClick={() => {/* Implementar nova tarefa */}}
+              onClick={() => setShowNewTaskForm(!showNewTaskForm)}
             >
-              + Nova Tarefa
+              <Plus className="w-4 h-4 mr-1" />
+              Nova Tarefa
             </Button>
           )}
         </div>
@@ -166,6 +195,13 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
       
       {isOpen && (
         <div className="p-4">
+          {showNewTaskForm && accordion.id === 'minhas-tarefas' && (
+            <NewTaskForm
+              onSave={handleNewTask}
+              onCancel={() => setShowNewTaskForm(false)}
+            />
+          )}
+          
           <TaskList
             accordionId={accordion.id}
             taskData={taskData}
