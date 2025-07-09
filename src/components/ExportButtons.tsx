@@ -1,16 +1,18 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Database, Upload } from 'lucide-react';
+import { Download, FileText, Database, Upload, RotateCcw } from 'lucide-react';
 import { TaskData } from '@/types/task';
 import { useToast } from '@/hooks/use-toast';
 
 interface ExportButtonsProps {
   taskData: TaskData;
+  onRestoreBackup: (backupData: TaskData) => void;
 }
 
-const ExportButtons: React.FC<ExportButtonsProps> = ({ taskData }) => {
+const ExportButtons: React.FC<ExportButtonsProps> = ({ taskData, onRestoreBackup }) => {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const exportFavoritosJSON = () => {
     const exportData = {
@@ -73,8 +75,54 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ taskData }) => {
     });
   };
 
+  const handleRestoreClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const backupData = JSON.parse(text);
+      
+      // Validar se é um backup válido
+      if (!backupData.minhasTarefas && !backupData.favoritos && !backupData.tarefasPorPessoa) {
+        throw new Error('Formato de backup inválido');
+      }
+
+      onRestoreBackup(backupData);
+      
+      toast({
+        title: "Sucesso",
+        description: "Backup restaurado com sucesso!",
+      });
+
+      // Limpar input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Erro ao restaurar backup:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao restaurar backup. Verifique se o arquivo está correto.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".json"
+        className="hidden"
+      />
+      
       <Button onClick={exportFavoritosJSON} variant="default">
         <FileText className="w-4 h-4 mr-2" />
         Exportar Favoritos + Minhas Tarefas (JSON)
@@ -86,6 +134,10 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ taskData }) => {
       <Button onClick={exportDatabase} variant="default" className="bg-green-600 hover:bg-green-700">
         <Database className="w-4 h-4 mr-2" />
         Backup Completo
+      </Button>
+      <Button onClick={handleRestoreClick} variant="default" className="bg-orange-600 hover:bg-orange-700">
+        <RotateCcw className="w-4 h-4 mr-2" />
+        Restaurar Backup
       </Button>
     </div>
   );

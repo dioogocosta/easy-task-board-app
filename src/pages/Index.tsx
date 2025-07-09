@@ -80,6 +80,24 @@ const Index = () => {
     });
   };
 
+  const handleRestoreBackup = (backupData: TaskData) => {
+    const newAccordions = [...accordions.filter(acc => acc.isFixed)]; // Manter apenas os fixos
+    
+    // Recriar acordeões das pessoas do backup
+    Object.keys(backupData.tarefasPorPessoa || {}).forEach((person, index) => {
+      if (!newAccordions.find(acc => acc.id === person)) {
+        newAccordions.push({
+          id: person,
+          title: person,
+          isFixed: false,
+          order: newAccordions.length
+        });
+      }
+    });
+
+    saveData(backupData, newAccordions);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Header />
@@ -90,7 +108,7 @@ const Index = () => {
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
         </div>
         
-        <ExportButtons taskData={taskData} />
+        <ExportButtons taskData={taskData} onRestoreBackup={handleRestoreBackup} />
         
         <TaskManager
           taskData={taskData}
