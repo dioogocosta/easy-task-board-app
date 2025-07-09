@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import mammoth from 'mammoth';
+import * as mammoth from 'mammoth';
 
 interface FileUploadProps {
   onUpload: (data: { [key: string]: string[] }) => void;
@@ -33,9 +33,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload }) => {
         const trimmedLine = line.trim();
         if (!trimmedLine) continue;
 
-        // Detectar títulos (nomes de pessoas) - texto em azul no Word geralmente são títulos
-        // Assumindo que títulos são linhas que começam com maiúscula e não contêm dois pontos
-        if (/^[A-ZÁÉÍÓÚÃÕÇ][a-záéíóúãõç\s]+$/.test(trimmedLine) && !trimmedLine.includes(':')) {
+        // Detectar títulos (nomes de pessoas) - assumindo que são linhas simples com apenas texto
+        // e não contêm dois pontos ou outros caracteres especiais
+        if (/^[A-ZÁÉÍÓÚÃÕÇ][a-záéíóúãõç\s]+$/.test(trimmedLine) && 
+            !trimmedLine.includes(':') && 
+            !trimmedLine.includes('-') &&
+            trimmedLine.length < 50) {
           currentPerson = trimmedLine;
           processedData[currentPerson] = [];
         } else if (currentPerson && trimmedLine) {
