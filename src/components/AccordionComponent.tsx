@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Edit3, GripVertical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { TaskData, Accordion, DragData } from '@/types/task';
 import TaskList from './TaskList';
 import NewTaskForm from './NewTaskForm';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface AccordionComponentProps {
   accordion: Accordion;
@@ -37,6 +37,7 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(accordion.title);
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
+  const { toast } = useToast();
 
   const handleDragStart = (e: React.DragEvent) => {
     if (accordion.isFixed) return;
@@ -96,10 +97,15 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
         dataCreacao: new Date().toLocaleDateString('pt-BR')
       };
       newTaskData.minhasTarefas.push(newTask);
+      
+      onDataChange(newTaskData, []);
+      setShowNewTaskForm(false);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Nova tarefa criada com sucesso.",
+      });
     }
-    
-    onDataChange(newTaskData, []);
-    setShowNewTaskForm(false);
   };
 
   const getTaskCount = () => {
@@ -183,11 +189,14 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-blue-700"
+              className={cn(
+                "text-white hover:bg-blue-700 transition-colors",
+                showNewTaskForm && "bg-blue-700"
+              )}
               onClick={() => setShowNewTaskForm(!showNewTaskForm)}
             >
               <Plus className="w-4 h-4 mr-1" />
-              Nova Tarefa
+              {showNewTaskForm ? 'Cancelar' : 'Nova Tarefa'}
             </Button>
           )}
         </div>
