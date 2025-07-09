@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { TaskData, Accordion, DragData } from '@/types/task';
 import AccordionComponent from './AccordionComponent';
@@ -165,14 +164,58 @@ const TaskManager: React.FC<TaskManagerProps> = ({
     });
   };
 
-  const sortedAccordions = [...accordions].sort((a, b) => a.order - b.order);
+  // Função para contar tarefas filtradas por termo de busca
+  const getFilteredTaskCount = (accordion: Accordion) => {
+    if (!searchTerm) {
+      // Se não há busca, retornar contagem total
+      if (accordion.id === 'minhas-tarefas') {
+        return taskData.minhasTarefas.length;
+      } else if (accordion.id === 'lista-favoritos') {
+        return taskData.favoritos.length;
+      } else {
+        return taskData.tarefasPorPessoa[accordion.id]?.length || 0;
+      }
+    }
+
+    // Se há busca, contar apenas tarefas que correspondem ao termo
+    if (accordion.id === 'minhas-tarefas') {
+      return taskData.minhasTarefas.filter(task =>
+        task.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+      ).length;
+    } else if (accordion.id === 'lista-favoritos') {
+      return taskData.favoritos.filter(fav =>
+        fav.tarefa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        fav.pessoa.toLowerCase().includes(searchTerm.toLowerCase())
+      ).length;
+    } else {
+      return (taskData.tarefasPorPessoa[accordion.id] || []).filter(task =>
+        task.toLowerCase().includes(searchTerm.toLowerCase())
+      ).length;
+    }
+  };
+
+  // Filtrar acordeões que têm tarefas correspondentes à busca
+  const getVisibleAccordions = () => {
+    if (!searchTerm) {
+      return accordions.sort((a, b) => a.order - b.order);
+    }
+
+    return accordions
+      .filter(accordion => getFilteredTaskCount(accordion) > 0)
+      .sort((a, b) => a.order - b.order);
+  };
+
+  const visibleAccordions = getVisibleAccordions();
 
   console.log('TaskManager - Accordions:', accordions);
   console.log('TaskManager - TaskData:', taskData);
+  console.log('TaskManager - Search Term:', searchTerm);
+  console.log('TaskManager - Visible Accordions:', visibleAccordions);
 
   return (
     <div className="space-y-4">
-      {sortedAccordions.map((accordion, index) => (
+      {visibleAccordions.map((accordion, index) => (
         <div key={accordion.id} className="relative">
           {dragData && dragData.type === 'accordion' && dragData.accordionId !== accordion.id && (
             <DropZone
@@ -194,9 +237,16 @@ const TaskManager: React.FC<TaskManagerProps> = ({
             isDragging={dragData?.accordionId === accordion.id}
             isDropTarget={dropTarget === accordion.id}
             accordions={accordions}
+            filteredTaskCount={getFilteredTaskCount(accordion)}
           />
         </div>
       ))}
+      
+      {searchTerm && visibleAccordions.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p>Nenhuma tarefa encontrada para "{searchTerm}"</p>
+        </div>
+      )}
     </div>
   );
 };

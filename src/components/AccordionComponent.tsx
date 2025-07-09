@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Edit3, GripVertical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ interface AccordionComponentProps {
   isDragging: boolean;
   isDropTarget: boolean;
   accordions: Accordion[];
+  filteredTaskCount: number;
 }
 
 const AccordionComponent: React.FC<AccordionComponentProps> = ({
@@ -34,7 +34,8 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
   onDrop,
   isDragging,
   isDropTarget,
-  accordions
+  accordions,
+  filteredTaskCount
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -126,16 +127,6 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
     }
   };
 
-  const getTaskCount = () => {
-    if (accordion.id === 'minhas-tarefas') {
-      return taskData.minhasTarefas.length;
-    } else if (accordion.id === 'lista-favoritos') {
-      return taskData.favoritos.length;
-    } else {
-      return taskData.tarefasPorPessoa[accordion.id]?.length || 0;
-    }
-  };
-
   return (
     <div
       className={cn(
@@ -185,7 +176,7 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
               </div>
             ) : (
               <span className="font-semibold">
-                {accordion.title} ({getTaskCount()})
+                {accordion.title} ({filteredTaskCount})
               </span>
             )}
           </button>
