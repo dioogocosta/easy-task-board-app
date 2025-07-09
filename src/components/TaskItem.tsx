@@ -193,6 +193,34 @@ const TaskItem: React.FC<TaskItemProps> = ({
     });
   };
 
+  const handleMoveToMyTasks = () => {
+    if (accordionId === 'lista-favoritos' && typeof task === 'object' && 'tarefa' in task) {
+      const newTaskData = { ...taskData };
+      
+      // Criar nova tarefa em "Minhas Tarefas"
+      const newTask = {
+        id: Date.now(),
+        titulo: task.tarefa,
+        descricao: `Movida de favoritos (${task.pessoa})`,
+        concluida: false,
+        dataCreacao: new Date().toLocaleDateString('pt-BR')
+      };
+      
+      newTaskData.minhasTarefas.push(newTask);
+      
+      // Remover dos favoritos
+      newTaskData.favoritos = newTaskData.favoritos.filter(f => 
+        !(f.tarefa === task.tarefa && f.pessoa === task.pessoa)
+      );
+      
+      onDataChange(newTaskData, []);
+      toast({
+        title: "Sucesso",
+        description: "Tarefa movida para Minhas Tarefas!",
+      });
+    }
+  };
+
   const isFavorited = taskData.favoritos.some(f => 
     f.tarefa === getTaskTitle() && f.pessoa === accordionId
   );
@@ -245,6 +273,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   Criada em: {task.dataCreacao}
                 </div>
               )}
+              {typeof task === 'object' && 'pessoa' in task && (
+                <div className="text-xs text-blue-600 mt-1">
+                  Origem: {task.pessoa}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -275,18 +308,29 @@ const TaskItem: React.FC<TaskItemProps> = ({
               </Button>
             )}
             
-            {accordionId !== 'lista-favoritos' && (
+            {accordionId === 'lista-favoritos' && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleToggleFavorite}
-                className={cn(
-                  isFavorited ? "text-yellow-500 hover:text-yellow-600" : "text-gray-400 hover:text-gray-600"
-                )}
+                onClick={handleMoveToMyTasks}
+                className="text-green-600 hover:text-green-700"
+                title="Mover para Minhas Tarefas"
               >
-                <Star className={cn("w-4 h-4", isFavorited && "fill-current")} />
+                <CheckCircle className="w-4 h-4" />
               </Button>
             )}
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleFavorite}
+              className={cn(
+                isFavorited ? "text-yellow-500 hover:text-yellow-600" : "text-gray-400 hover:text-gray-600"
+              )}
+              title={isFavorited ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+            >
+              <Star className={cn("w-4 h-4", isFavorited && "fill-current")} />
+            </Button>
             
             {accordionId === 'minhas-tarefas' && (
               <Button variant="ghost" size="sm" onClick={handleEdit}>
