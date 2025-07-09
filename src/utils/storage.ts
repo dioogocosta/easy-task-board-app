@@ -6,6 +6,17 @@ const STORAGE_KEYS = {
   ACCORDIONS: 'accordions'
 };
 
+const getDefaultAccordions = (): Accordion[] => [
+  { id: 'minhas-tarefas', title: 'Minhas Tarefas', isFixed: true, order: 0 },
+  { id: 'lista-favoritos', title: 'Lista de Favoritos', isFixed: true, order: 1 }
+];
+
+const getDefaultTaskData = (): TaskData => ({
+  minhasTarefas: [],
+  favoritos: [],
+  tarefasPorPessoa: {}
+});
+
 export const loadFromStorage = async (): Promise<{
   taskData: TaskData;
   accordions: Accordion[];
@@ -14,30 +25,28 @@ export const loadFromStorage = async (): Promise<{
     const taskDataStr = localStorage.getItem(STORAGE_KEYS.TASK_DATA);
     const accordionsStr = localStorage.getItem(STORAGE_KEYS.ACCORDIONS);
     
-    const taskData: TaskData = taskDataStr ? JSON.parse(taskDataStr) : {
-      minhasTarefas: [],
-      favoritos: [],
-      tarefasPorPessoa: {}
-    };
+    const taskData: TaskData = taskDataStr ? JSON.parse(taskDataStr) : getDefaultTaskData();
     
-    const accordions: Accordion[] = accordionsStr ? JSON.parse(accordionsStr) : [
-      { id: 'minhas-tarefas', title: 'Minhas Tarefas', isFixed: true, order: 0 },
-      { id: 'lista-favoritos', title: 'Lista de Favoritos', isFixed: true, order: 1 }
-    ];
+    let accordions: Accordion[] = accordionsStr ? JSON.parse(accordionsStr) : [];
+    
+    // Garantir que os acordeões padrão sempre existam
+    const defaultAccordions = getDefaultAccordions();
+    defaultAccordions.forEach(defaultAcc => {
+      const exists = accordions.find(acc => acc.id === defaultAcc.id);
+      if (!exists) {
+        accordions.push(defaultAcc);
+      }
+    });
+    
+    // Ordenar os acordeões
+    accordions.sort((a, b) => a.order - b.order);
     
     return { taskData, accordions };
   } catch (error) {
     console.error('Erro ao carregar dados do localStorage:', error);
     return {
-      taskData: {
-        minhasTarefas: [],
-        favoritos: [],
-        tarefasPorPessoa: {}
-      },
-      accordions: [
-        { id: 'minhas-tarefas', title: 'Minhas Tarefas', isFixed: true, order: 0 },
-        { id: 'lista-favoritos', title: 'Lista de Favoritos', isFixed: true, order: 1 }
-      ]
+      taskData: getDefaultTaskData(),
+      accordions: getDefaultAccordions()
     };
   }
 };

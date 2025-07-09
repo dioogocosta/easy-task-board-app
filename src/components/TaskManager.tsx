@@ -167,6 +167,9 @@ const TaskManager: React.FC<TaskManagerProps> = ({
 
   const sortedAccordions = [...accordions].sort((a, b) => a.order - b.order);
 
+  console.log('TaskManager - Accordions:', accordions);
+  console.log('TaskManager - TaskData:', taskData);
+
   return (
     <div className="space-y-4">
       {sortedAccordions.map((accordion, index) => (
@@ -190,6 +193,7 @@ const TaskManager: React.FC<TaskManagerProps> = ({
             onDrop={handleDrop}
             isDragging={dragData?.accordionId === accordion.id}
             isDropTarget={dropTarget === accordion.id}
+            accordions={accordions}
           />
         </div>
       ))}

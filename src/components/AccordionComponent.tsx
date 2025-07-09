@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Edit3, GripVertical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ interface AccordionComponentProps {
   onDrop: (targetId: string) => void;
   isDragging: boolean;
   isDropTarget: boolean;
+  accordions: Accordion[];
 }
 
 const AccordionComponent: React.FC<AccordionComponentProps> = ({
@@ -31,7 +33,8 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
   onDragOver,
   onDrop,
   isDragging,
-  isDropTarget
+  isDropTarget,
+  accordions
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -66,16 +69,31 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
 
   const handleTitleSave = () => {
     if (editingTitle.trim() && editingTitle !== accordion.title) {
-      // Implementar lógica de renomeação
       const newTaskData = { ...taskData };
-      const newAccordions = [accordion]; // Simplificado por agora
+      const newAccordions = [...accordions];
       
-      if (newTaskData.tarefasPorPessoa[accordion.id]) {
-        newTaskData.tarefasPorPessoa[editingTitle] = newTaskData.tarefasPorPessoa[accordion.id];
-        delete newTaskData.tarefasPorPessoa[accordion.id];
+      // Encontrar o índice do acordeão atual
+      const accordionIndex = newAccordions.findIndex(acc => acc.id === accordion.id);
+      if (accordionIndex !== -1) {
+        // Atualizar o título do acordeão
+        newAccordions[accordionIndex] = { ...accordion, title: editingTitle };
+        
+        // Se existem tarefas para essa pessoa, atualizar a chave
+        if (newTaskData.tarefasPorPessoa[accordion.id]) {
+          newTaskData.tarefasPorPessoa[editingTitle] = newTaskData.tarefasPorPessoa[accordion.id];
+          delete newTaskData.tarefasPorPessoa[accordion.id];
+          
+          // Atualizar também o ID do acordeão
+          newAccordions[accordionIndex].id = editingTitle;
+        }
+        
+        onDataChange(newTaskData, newAccordions);
+        
+        toast({
+          title: "Sucesso!",
+          description: "Seção renomeada com sucesso.",
+        });
       }
-      
-      onDataChange(newTaskData, newAccordions);
     }
     setIsEditing(false);
   };
@@ -98,7 +116,7 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
       };
       newTaskData.minhasTarefas.push(newTask);
       
-      onDataChange(newTaskData, []);
+      onDataChange(newTaskData, accordions);
       setShowNewTaskForm(false);
       
       toast({
@@ -215,7 +233,7 @@ const AccordionComponent: React.FC<AccordionComponentProps> = ({
             accordionId={accordion.id}
             taskData={taskData}
             searchTerm={searchTerm}
-            onDataChange={onDataChange}
+            onDataChange={(newTaskData) => onDataChange(newTaskData, accordions)}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
           />
